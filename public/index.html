@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MeshyMMO — Astralon Online</title>
+  <link rel="stylesheet" href="/css/game.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/lib/three.module.js",
+      
+      "three/addons/loaders/GLTFLoader.js": "/lib/loaders/GLTFLoader.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- AUTH -->
+  <div id="screen-auth" class="screen">
+    <div class="panel auth-panel">
+      <div class="logo">⚔️ MeshyMMO</div>
+      <h1>Astralon Online</h1>
+      <p class="sub">MMO RPG no navegador · personagens 3D com <b>Meshy AI</b></p>
+      <div class="tabs">
+        <button class="tab active" data-tab="login">Entrar</button>
+        <button class="tab" data-tab="register">Criar conta</button>
+      </div>
+      <form id="form-login" class="form">
+        <label>Usuário <input id="login-user" autocomplete="username" required minlength="3" value="dev" /></label>
+        <label>Senha <input id="login-pass" type="password" autocomplete="current-password" required minlength="4" value="dev123" /></label>
+        <button type="submit" class="btn primary">Entrar no reino</button>
+      </form>
+      <button type="button" class="btn primary" id="btn-dev-login" style="width:100%;margin-top:0.75rem;background:linear-gradient(135deg,#0d9488,#22d3a6);color:#042f2e;border:none">
+        ▶ Entrar como DEV e jogar agora
+      </button>
+      <p class="hint">Conta dev: <code>dev</code> / <code>dev123</code> · herói <code>DevHero</code> (entra no mundo ao clicar)</p>
+      <div id="global-toasts" style="position:fixed;right:12px;bottom:12px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none"></div>
+      <form id="form-register" class="form hidden">
+        <label>Usuário <input id="reg-user" autocomplete="username" required minlength="3" /></label>
+        <label>Senha <input id="reg-pass" type="password" autocomplete="new-password" required minlength="4" /></label>
+        <button type="submit" class="btn primary">Criar conta</button>
+      </form>
+      <p id="auth-error" class="error"></p>
+      <p class="hint">Servidor: <code id="server-url"></code></p>
+    </div>
+  </div>
+
+  <!-- CHARACTER SELECT -->
+  <div id="screen-chars" class="screen hidden">
+    <div class="panel wide">
+      <header class="row-between">
+        <div>
+          <h2>Seus heróis</h2>
+          <p class="sub">Olá, <b id="who"></b></p>
+        </div>
+        <button class="btn" id="btn-logout">Sair</button>
+      </header>
+      <div id="char-list" class="char-grid"></div>
+      <hr />
+      <h3>Criar personagem + Meshy AI</h3>
+      <form id="form-create" class="form create-form">
+        <div class="grid-2">
+          <label>Nome <input id="char-name" maxlength="20" required minlength="2" placeholder="Ex: Kaelthar" /></label>
+          <label>Classe
+            <select id="char-class">
+              <option value="warrior">Guerreiro</option>
+              <option value="mage">Mago</option>
+              <option value="rogue">Ladino</option>
+            </select>
+          </label>
+        </div>
+        <label>Prompt Meshy AI (visual 3D do personagem)
+          <textarea id="char-prompt" rows="3" placeholder="ex: armored fantasy warrior, male, short hair, cape, game character, A-pose, full body"></textarea>
+        </label>
+        <label class="check"><input type="checkbox" id="char-meshy" checked /> Gerar modelo 3D com Meshy AI agora</label>
+        <label>API Key Meshy (opcional — salva na conta)
+          <input id="meshy-key" type="password" placeholder="msy-... ou key de teste" />
+        </label>
+        <p class="hint">Teste sem créditos: <code>msy_dummy_api_key_for_test_mode_12345678</code> · Key real: <a href="https://www.meshy.ai/settings/api" target="_blank" rel="noreferrer">meshy.ai/settings/api</a></p>
+        <div class="row-between">
+          <button type="submit" class="btn primary">Criar herói</button>
+          <button type="button" class="btn" id="btn-save-key">Salvar key</button>
+        </div>
+      </form>
+      <div id="meshy-progress" class="progress hidden">
+        <div class="bar"><i id="meshy-bar"></i></div>
+        <span id="meshy-status">…</span>
+      </div>
+      <p id="char-error" class="error"></p>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="screen-game" class="screen hidden">
+    <div id="viewport"></div>
+    <div id="hud">
+      <div class="hud-top">
+        <div class="badge"><span>Zona</span><b id="hud-zone">—</b></div>
+        <div class="badge"><span>Herói</span><b id="hud-name">—</b></div>
+        <div class="badge"><span>Nv</span><b id="hud-level">1</b></div>
+        <div class="badge"><span>Ouro</span><b id="hud-gold">0</b></div>
+      </div>
+      <div class="bars">
+        <div class="bar hp"><i id="bar-hp"></i><span id="txt-hp">100/100</span></div>
+        <div class="bar mp"><i id="bar-mp"></i><span id="txt-mp">50/50</span></div>
+        <div class="bar xp"><i id="bar-xp"></i><span id="txt-xp">0 XP</span></div>
+      </div>
+      <div id="target-panel" class="target hidden">
+        <span id="target-name">—</span>
+        <div class="bar hp small"><i id="target-hp"></i></div>
+      </div>
+      <div id="chat" class="chat">
+        <div id="chat-log"></div>
+        <form id="chat-form"><input id="chat-input" placeholder="Chat (Enter)…" maxlength="160" autocomplete="off" /></form>
+      </div>
+      <div class="hint-bottom" id="game-hint">3ª pessoa · Segure botão esq. e arraste para girar câmera · Scroll zoom · WASD mover · Shift correr · Espaço pular · Clique atacar · E interagir</div>
+      <div id="toast-stack"></div>
+    </div>
+    <div id="blocker" class="blocker">
+      <div class="blocker-card">
+        <h2 id="blocker-title">Vale de Astralon</h2>
+        <p id="blocker-text">Câmera em 3ª pessoa · gráficos aprimorados</p>
+        <button class="btn primary" id="btn-pointer">Jogar</button>
+        <button class="btn" id="btn-leave">Voltar ao menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

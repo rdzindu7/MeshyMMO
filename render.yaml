@@ -1,0 +1,18 @@
+# Deploy grátis no Render: https://render.com
+# New → Blueprint → conecte este repositório
+services:
+  - type: web
+    name: meshy-mmo
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: MESHY_API_KEY
+        sync: false
+      - key: PORT
+        value: "10000"

@@ -1,0 +1,15 @@
+node_modules/
+.env
+*.log
+server.log
+server.err
+boot.out
+boot.err
+data/users.json
+data/characters.json
+data/models/*
+!data/models/.gitkeep
+.DS_Store
+Thumbs.db
+_keep_alive.bat
+_run_server.bat
