@@ -13,3 +13,9 @@ data/models/*
 Thumbs.db
 _keep_alive.bat
 _run_server.bat
+
+PUBLIC_URL.txt
+logs/
+tunnel.log
+tunnel.err
+
